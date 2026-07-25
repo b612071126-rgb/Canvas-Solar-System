@@ -14,20 +14,53 @@ canvas.height =
 window.innerHeight;
 
 
-console.log(canvas.width);
-console.log(canvas.height);
+
+let x = 0;
 
 
-ctx.fillStyle = "yellow";
 
-ctx.beginPath();
+function draw(){
 
-ctx.arc(
-    canvas.width / 2,
-    canvas.height / 2,
-    50,
-    0,
-    Math.PI * 2
-);
+    // 清空画布
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
-ctx.fill();
+
+    // 设置颜色
+    ctx.fillStyle = "yellow";
+
+
+    // 开始绘制
+    ctx.beginPath();
+
+
+    ctx.arc(
+        x,
+        canvas.height / 2,
+        50,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+
+
+    // 改变位置
+    x += 2;
+
+
+
+    // 下一帧继续
+    requestAnimationFrame(draw);
+
+}
+
+
+
+draw();
