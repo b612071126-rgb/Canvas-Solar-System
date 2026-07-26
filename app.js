@@ -1,3 +1,4 @@
+alert("太阳系启动");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
