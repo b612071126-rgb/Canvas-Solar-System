@@ -5,9 +5,9 @@ const ctx =
 canvas.getContext("2d");
 
 
-// =====================
+// ========================
 // Canvas
-// =====================
+// ========================
 
 function resize(){
 
@@ -29,17 +29,21 @@ window.addEventListener(
 
 
 
-// =====================
+// ========================
 // 宇宙核心
-// =====================
+// ========================
 
-const universe={
+const Universe = {
 
-    G:0.05,
+    age:0,
+
+    G:0.08,
 
     bodies:[],
 
     particles:[],
+
+    stars:[],
 
     blackHole:null
 
@@ -47,10 +51,9 @@ const universe={
 
 
 
-
-// =====================
-// 基础物体
-// =====================
+// ========================
+// 基础天体
+// ========================
 
 class Body{
 
@@ -59,8 +62,9 @@ class Body{
         x,
         y,
         mass,
-        type="star"
+        type="dust"
     ){
+
 
         this.x=x;
 
@@ -68,11 +72,11 @@ class Body{
 
 
         this.vx=
-        (Math.random()-0.5);
+        (Math.random()-0.5)*2;
 
 
         this.vy=
-        (Math.random()-0.5);
+        (Math.random()-0.5)*2;
 
 
 
@@ -86,55 +90,64 @@ class Body{
         Math.sqrt(mass)*2;
 
 
-        this.life=1000;
+
+        this.age=0;
+
+
+        this.life=
+        10000+
+        Math.random()*10000;
 
 
     }
-
 
 
 
     gravity(other){
 
 
-        let dx=
+        let dx =
         other.x-this.x;
 
 
-        let dy=
+        let dy =
         other.y-this.y;
 
 
 
-        let d=
+        let distance =
         Math.sqrt(
             dx*dx+
             dy*dy
         );
 
 
-        if(d<20)
+
+        if(distance<20)
         return;
 
 
 
-        let force=
-        universe.G*
+        let force =
+
+        Universe.G*
         this.mass*
         other.mass/
-        (d*d);
+        (distance*distance);
 
 
 
         this.vx +=
         force*
-        dx/d;
+        dx/
+        distance;
+
 
 
         this.vy +=
         force*
-        dy/d;
-
+        dy/
+        distance;
 
 
     }
@@ -142,7 +155,8 @@ class Body{
 
 
 
-    update(){
+
+    move(){
 
 
         this.x+=this.vx;
@@ -156,6 +170,7 @@ class Body{
         this.vy*=0.995;
 
 
+
     }
 
 
@@ -164,19 +179,246 @@ class Body{
     draw(){
 
 
-        if(this.type==="star"){
+        ctx.fillStyle="white";
 
-            ctx.fillStyle=
-            "orange";
 
-        }
-        else{
+        ctx.beginPath();
 
-            ctx.fillStyle=
-            "white";
 
-        }
+        ctx.arc(
 
+            this.x,
+
+            this.y,
+
+            this.radius,
+
+            0,
+
+            Math.PI*2
+
+        );
+
+
+        ctx.fill();
+
+
+
+    }
+
+
+}
+
+
+
+
+
+
+// ========================
+// 恒星
+// ========================
+
+class Star extends Body{
+
+
+    constructor(x,y,mass){
+
+
+        super(
+            x,
+            y,
+            mass,
+            "star"
+        );
+
+
+        this.radius=
+        20+
+        Math.sqrt(mass);
+
+
+        this.color="orange";
+
+
+    }
+
+
+
+    draw(){
+
+
+        let glow =
+        ctx.createRadialGradient(
+
+            this.x,
+            this.y,
+            5,
+
+            this.x,
+            this.y,
+            80
+
+        );
+
+
+        glow.addColorStop(
+            0,
+            "yellow"
+        );
+
+
+        glow.addColorStop(
+            1,
+            "transparent"
+        );
+
+
+
+        ctx.fillStyle=glow;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            this.x,
+
+            this.y,
+
+            80,
+
+            0,
+
+            Math.PI*2
+
+        );
+
+
+        ctx.fill();
+
+
+
+        ctx.fillStyle="orange";
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            this.x,
+
+            this.y,
+
+            this.radius,
+
+            0,
+
+            Math.PI*2
+
+        );
+
+
+        ctx.fill();
+
+
+
+    }
+
+
+}
+
+
+
+
+
+// ========================
+// 行星
+// ========================
+
+class Planet extends Body{
+
+
+    constructor(
+        star,
+        distance,
+        size
+    ){
+
+
+        super(
+
+            star.x+distance,
+
+            star.y,
+
+            size,
+
+            "planet"
+
+        );
+
+
+        this.star=star;
+
+
+        this.distance=distance;
+
+
+        this.angle=
+        Math.random()*Math.PI*2;
+
+
+
+        this.speed=
+        0.02+
+        Math.random()*0.02;
+
+
+
+        this.radius=
+        size*2;
+
+
+    }
+
+
+
+
+    move(){
+
+
+        this.angle+=
+        this.speed;
+
+
+
+        this.x =
+        this.star.x+
+        Math.cos(this.angle)
+        *
+        this.distance;
+
+
+
+        this.y =
+        this.star.y+
+        Math.sin(this.angle)
+        *
+        this.distance;
+
+
+    }
+
+
+
+
+    draw(){
+
+
+        ctx.fillStyle=
+        "#3399ff";
 
 
         ctx.beginPath();
@@ -210,10 +452,9 @@ class Body{
 
 
 
-
-// =====================
+// ========================
 // 黑洞
-// =====================
+// ========================
 
 class BlackHole extends Body{
 
@@ -222,65 +463,57 @@ class BlackHole extends Body{
 
 
         super(
+
             x,
+
             y,
+
             800,
+
             "blackhole"
+
         );
 
 
-        this.radius=30;
-
-        this.diskAngle=0;
+        this.radius=35;
 
 
     }
 
 
 
-
-    update(){
-
-
-        this.diskAngle+=0.03;
-
-
-    }
-
-
-
-
-
-    consume(){
+    eat(){
 
 
         for(
             let i=
-            universe.bodies.length-1;
+            Universe.bodies.length-1;
+
             i>=0;
+
             i--
         ){
 
 
-            let b=
-            universe.bodies[i];
+            let body =
+            Universe.bodies[i];
 
 
-            if(b===this)
+            if(body===this)
             continue;
 
 
 
-            let dx=
-            b.x-this.x;
+            let dx =
+            body.x-this.x;
 
 
-            let dy=
-            b.y-this.y;
+            let dy =
+            body.y-this.y;
 
 
 
-            let d=
+            let distance =
             Math.sqrt(
                 dx*dx+
                 dy*dy
@@ -289,32 +522,38 @@ class BlackHole extends Body{
 
 
             if(
-                d <
-                this.radius+b.radius
+                distance <
+                this.radius+
+                body.radius
             ){
 
 
-                this.mass+=b.mass;
+                this.mass +=
+                body.mass;
 
 
 
-                this.radius=
+                this.radius =
                 Math.sqrt(
                     this.mass
                 );
 
 
-                universe.bodies.splice(
+                createExplosion(
+
+                    body.x,
+
+                    body.y
+
+                );
+
+
+
+                Universe.bodies.splice(
                     i,
                     1
                 );
 
-
-
-                createExplosion(
-                    b.x,
-                    b.y
-                );
 
 
             }
@@ -324,21 +563,52 @@ class BlackHole extends Body{
         }
 
 
-
     }
+
 
 
 
     draw(){
 
 
-        // 吸积盘
 
-        ctx.strokeStyle=
-        "rgba(255,120,0,0.5)";
+        // 引力光晕
+
+        let gradient =
+        ctx.createRadialGradient(
+
+            this.x,
+
+            this.y,
+
+            10,
+
+            this.x,
+
+            this.y,
+
+            120
+
+        );
 
 
-        ctx.lineWidth=5;
+
+        gradient.addColorStop(
+            0,
+            "purple"
+        );
+
+
+        gradient.addColorStop(
+            1,
+            "transparent"
+        );
+
+
+
+        ctx.fillStyle=
+        gradient;
+
 
 
         ctx.beginPath();
@@ -350,21 +620,21 @@ class BlackHole extends Body{
 
             this.y,
 
-            this.radius*2,
+            120,
 
-            this.diskAngle,
+            0,
 
-            this.diskAngle+Math.PI*2
+            Math.PI*2
 
         );
 
 
-        ctx.stroke();
+        ctx.fill();
 
 
 
 
-        // 黑洞本体
+        // 黑洞
 
         ctx.fillStyle=
         "black";
@@ -398,14 +668,18 @@ class BlackHole extends Body{
 
 }
 
-// =====================
-// 能量粒子系统
-// =====================
-
-class EnergyParticle{
 
 
-    constructor(x,y,type="explosion"){
+
+
+// ========================
+// 能量粒子
+// ========================
+
+class Particle{
+
+
+    constructor(x,y){
 
 
         this.x=x;
@@ -413,35 +687,40 @@ class EnergyParticle{
         this.y=y;
 
 
-        let angle=
-        Math.random()*Math.PI*2;
+
+        let angle =
+        Math.random()
+        *
+        Math.PI
+        *
+        2;
 
 
-        let speed=
+
+        let speed =
         Math.random()*5+1;
 
 
 
-        this.vx=
-        Math.cos(angle)*speed;
+        this.vx =
+        Math.cos(angle)
+        *
+        speed;
 
 
-        this.vy=
-        Math.sin(angle)*speed;
+
+        this.vy =
+        Math.sin(angle)
+        *
+        speed;
 
 
 
         this.life=100;
 
 
-        this.size=
-        Math.random()*3+1;
-
-
-        this.type=type;
-
-
     }
+
 
 
 
@@ -468,20 +747,12 @@ class EnergyParticle{
 
 
 
+
     draw(){
 
 
-        if(this.type==="jet"){
-
-            ctx.fillStyle="cyan";
-
-        }
-        else{
-
-            ctx.fillStyle="orange";
-
-        }
-
+        ctx.fillStyle=
+        "orange";
 
 
         ctx.beginPath();
@@ -493,7 +764,7 @@ class EnergyParticle{
 
             this.y,
 
-            this.size,
+            2,
 
             0,
 
@@ -513,23 +784,28 @@ class EnergyParticle{
 
 
 
-// =====================
+
+
+// ========================
 // 爆炸
-// =====================
+// ========================
 
 function createExplosion(x,y){
 
 
+
     for(
         let i=0;
-        i<80;
+
+        i<50;
+
         i++
     ){
 
 
-        universe.particles.push(
+        Universe.particles.push(
 
-            new EnergyParticle(
+            new Particle(
                 x,
                 y
             )
@@ -544,89 +820,104 @@ function createExplosion(x,y){
 
 
 
-
-// =====================
-// 黑洞喷流
-// =====================
-
-function createJet(){
+// ========================
+// 创建宇宙
+// ========================
 
 
-    let bh =
-    universe.blackHole;
+// 创建中心恒星
 
+let sun =
+new Star(
 
+    canvas.width/2,
 
-    if(!bh)
-    return;
+    canvas.height/2,
 
+    500
 
-
-    // 上下两个方向
-
-    for(
-        let i=0;
-        i<3;
-        i++
-    ){
-
-
-        let p =
-        new EnergyParticle(
-            bh.x,
-            bh.y,
-            "jet"
-        );
+);
 
 
 
-        p.vx =
-        (Math.random()-0.5);
+Universe.bodies.push(
+    sun
+);
 
 
-        p.vy =
-        -Math.random()*8;
-
-
-
-        universe.particles.push(p);
-
-
-
-    }
-
-
-
-}
+Universe.stars.push(
+    sun
+);
 
 
 
 
+// 创建行星
+
+Universe.bodies.push(
+
+    new Planet(
+        sun,
+        120,
+        5
+    )
+
+);
 
 
-// =====================
-// 创建初始宇宙
-// =====================
+Universe.bodies.push(
 
+    new Planet(
+        sun,
+        220,
+        8
+    )
+
+);
+
+
+Universe.bodies.push(
+
+    new Planet(
+        sun,
+        330,
+        12
+    )
+
+);
+
+
+
+
+
+// 创建一些宇宙尘埃
 
 for(
     let i=0;
+
     i<100;
+
     i++
 ){
 
 
-    universe.bodies.push(
+    Universe.bodies.push(
 
         new Body(
 
-            Math.random()*canvas.width,
+            Math.random()
+            *
+            canvas.width,
 
-            Math.random()*canvas.height,
 
-            Math.random()*5+1,
+            Math.random()
+            *
+            canvas.height,
 
-            "star"
+
+            Math.random()*3+1,
+
+            "dust"
 
         )
 
@@ -638,12 +929,14 @@ for(
 
 
 
+
 // 创建黑洞
 
-universe.blackHole =
+Universe.blackHole =
+
 new BlackHole(
 
-    canvas.width/2,
+    canvas.width*0.75,
 
     canvas.height/2
 
@@ -651,8 +944,10 @@ new BlackHole(
 
 
 
-universe.bodies.push(
-    universe.blackHole
+Universe.bodies.push(
+
+    Universe.blackHole
+
 );
 
 
@@ -660,20 +955,24 @@ universe.bodies.push(
 
 
 
-// =====================
-// 更新宇宙
-// =====================
+// ========================
+// 物理更新
+// ========================
 
 function update(){
 
 
 
+    Universe.age++;
+
+
+
     let bodies =
-    universe.bodies;
+    Universe.bodies;
 
 
 
-    // 引力
+    // 引力计算
 
     for(
         let a of bodies
@@ -685,9 +984,14 @@ function update(){
         ){
 
 
-            if(a!==b){
+            if(a!==b
+            &&
+            a.type!=="planet"
+            ){
+
 
                 a.gravity(b);
+
 
             }
 
@@ -699,36 +1003,45 @@ function update(){
 
 
 
+
+
     // 黑洞吞噬
 
-    universe.blackHole.consume();
-
-
-
-    // 黑洞更新
-
-    universe.blackHole.update();
-
-
-
-    // 随机喷流
-
     if(
-        Math.random()<0.05
+        Universe.blackHole
     ){
 
-        createJet();
+        Universe.blackHole.eat();
 
     }
 
 
 
 
-    // 更新粒子
+
+
+    // 天体移动
+
+    for(
+        let body of bodies
+    ){
+
+
+        body.move();
+
+
+    }
+
+
+
+
+
+
+    // 粒子更新
 
     for(
         let i=
-        universe.particles.length-1;
+        Universe.particles.length-1;
 
         i>=0;
 
@@ -736,8 +1049,9 @@ function update(){
     ){
 
 
+
         let p =
-        universe.particles[i];
+        Universe.particles[i];
 
 
         p.update();
@@ -748,31 +1062,16 @@ function update(){
             p.life<=0
         ){
 
-            universe.particles.splice(
+
+            Universe.particles.splice(
                 i,
                 1
             );
 
-        }
-
-
-    }
-
-
-
-    // 更新天体
-
-    for(
-        let b of bodies
-    ){
-
-        if(
-            b!==universe.blackHole
-        ){
-
-            b.update();
 
         }
+
+
 
     }
 
@@ -783,15 +1082,24 @@ function update(){
 
 
 
-// =====================
+
+
+
+
+// ========================
 // 绘制
-// =====================
+// ========================
 
 function draw(){
 
 
-    ctx.fillStyle=
-    "rgba(0,0,0,0.25)";
+
+    // 留下运动轨迹
+
+    ctx.fillStyle =
+
+    "rgba(0,0,0,0.2)";
+
 
 
     ctx.fillRect(
@@ -808,28 +1116,74 @@ function draw(){
 
 
 
-    // 天体
+
+
+    // 绘制天体
 
     for(
-        let b of universe.bodies
+        let body of Universe.bodies
     ){
 
-        b.draw();
+
+        body.draw();
+
 
     }
 
 
 
 
-    // 能量粒子
+
+    // 绘制粒子
 
     for(
-        let p of universe.particles
+        let p of Universe.particles
     ){
+
 
         p.draw();
 
+
     }
+
+
+
+
+
+    // 信息
+
+    ctx.fillStyle="white";
+
+
+    ctx.font="16px Arial";
+
+
+    ctx.fillText(
+
+        "Universe Age: "
+        +
+        Universe.age,
+
+
+        20,
+
+        30
+
+    );
+
+
+    ctx.fillText(
+
+        "Bodies: "
+        +
+        Universe.bodies.length,
+
+
+        20,
+
+        55
+
+    );
 
 
 
@@ -837,11 +1191,16 @@ function draw(){
 
 
 
-// =====================
-// 主循环
-// =====================
+
+
+
+
+// ========================
+// 游戏循环
+// ========================
 
 function animate(){
+
 
 
     update();
@@ -859,3 +1218,5 @@ function animate(){
 }
 
 
+
+animate();
