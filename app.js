@@ -3,9 +3,9 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 
-// =====================
-// Canvas 初始化
-// =====================
+// =================
+// Canvas
+// =================
 
 function resize(){
 
@@ -22,46 +22,30 @@ window.addEventListener(
 );
 
 
-
-// =====================
-// 工具函数
-// =====================
-
-function random(min,max){
-
-    return Math.random()*(max-min)+min;
-
-}
-
-
-
-// =====================
-// 星空背景
-// =====================
+// =================
+// 星空
+// =================
 
 let stars = [];
 
-
-for(let i=0;i<120;i++){
+for(let i=0;i<200;i++){
 
     stars.push({
 
-        x:random(0,canvas.width),
+        x:Math.random()*canvas.width,
 
-        y:random(0,canvas.height),
+        y:Math.random()*canvas.height,
 
-        size:random(1,3)
+        size:Math.random()*2+1
 
     });
 
 }
 
 
-
 function drawStars(){
 
     ctx.fillStyle="white";
-
 
     for(let star of stars){
 
@@ -83,66 +67,111 @@ function drawStars(){
 
 
 
-// =====================
-// 太阳对象
-// =====================
+// =================
+// 太阳
+// =================
 
-const sun = {
+const sun={
 
-    x:0,
+    radius:55,
 
-    y:0,
+    color:"#ffaa00",
 
-    radius:50,
-
-    color:"#ffaa00"
-
+    rotation:0,
 
 };
 
 
 
-// =====================
-// 地球对象
-// =====================
+// =================
+// 行星系统
+// =================
 
-const earth = {
+const planets=[
 
+
+    {
+
+        name:"Earth",
+
+        distance:170,
+
+        angle:0,
+
+        speed:0.02,
+
+        radius:12,
+
+        color:"#3399ff"
+
+    },
+
+
+    {
+
+        name:"Mars",
+
+        distance:240,
+
+        angle:2,
+
+        speed:0.012,
+
+        radius:9,
+
+        color:"#ff5533"
+
+    },
+
+
+    {
+
+        name:"Jupiter",
+
+        distance:340,
+
+        angle:4,
+
+        speed:0.006,
+
+        radius:25,
+
+        color:"#d9a066"
+
+    }
+
+
+];
+
+
+
+// =================
+// 月球
+// =================
+
+const moon={
+
+    distance:25,
 
     angle:0,
 
+    speed:0.08,
 
-    distance:170,
+    radius:4,
 
-
-    speed:0.02,
-
-
-    radius:12,
-
-
-    color:"#3399ff",
-
-
-    x:0,
-
-
-    y:0
-
+    color:"white",
 
 };
 
 
 
 
-// =====================
-// 更新逻辑
-// =====================
+// =================
+// 更新
+// =================
 
 function update(){
 
-
-    // 太阳保持中心
 
     sun.x =
     canvas.width/2;
@@ -153,71 +182,67 @@ function update(){
 
 
 
-    // 地球角度变化
+    // 行星更新
 
-    earth.angle += earth.speed;
+    for(let planet of planets){
+
+
+        planet.angle += planet.speed;
+
+
+        planet.x =
+        sun.x +
+        Math.cos(planet.angle)
+        *
+        planet.distance;
+
+
+        planet.y =
+        sun.y +
+        Math.sin(planet.angle)
+        *
+        planet.distance;
+
+
+    }
 
 
 
-    // 根据角度计算位置
+    // 月球绕地球
 
-    earth.x =
-    sun.x +
-    Math.cos(earth.angle)
+    let earth = planets[0];
+
+
+    moon.angle += moon.speed;
+
+
+    moon.x =
+    earth.x +
+    Math.cos(moon.angle)
     *
-    earth.distance;
+    moon.distance;
 
 
-    earth.y =
-    sun.y +
-    Math.sin(earth.angle)
+    moon.y =
+    earth.y +
+    Math.sin(moon.angle)
     *
-    earth.distance;
+    moon.distance;
+
 
 
 }
 
 
 
+// =================
+// 绘制轨道
+// =================
 
+function drawOrbit(planet){
 
-// =====================
-// 绘制太阳
-// =====================
-
-function drawSun(){
-
-
-    // 光晕
-
-    let gradient =
-    ctx.createRadialGradient(
-
-        sun.x,
-        sun.y,
-        10,
-
-        sun.x,
-        sun.y,
-        80
-
-    );
-
-
-    gradient.addColorStop(
-        0,
-        "yellow"
-    );
-
-
-    gradient.addColorStop(
-        1,
-        "transparent"
-    );
-
-
-    ctx.fillStyle =
-    gradient;
+    ctx.strokeStyle =
+    "rgba(255,255,255,0.25)";
 
 
     ctx.beginPath();
@@ -229,7 +254,68 @@ function drawSun(){
 
         sun.y,
 
-        80,
+        planet.distance,
+
+        0,
+
+        Math.PI*2
+
+    );
+
+
+    ctx.stroke();
+
+
+}
+
+
+
+// =================
+// 绘制太阳
+// =================
+
+function drawSun(){
+
+
+    let glow =
+    ctx.createRadialGradient(
+
+        sun.x,
+        sun.y,
+        20,
+
+        sun.x,
+        sun.y,
+        100
+
+    );
+
+
+    glow.addColorStop(
+        0,
+        "yellow"
+    );
+
+
+    glow.addColorStop(
+        1,
+        "transparent"
+    );
+
+
+    ctx.fillStyle=glow;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        sun.x,
+
+        sun.y,
+
+        100,
 
         0,
 
@@ -242,12 +328,7 @@ function drawSun(){
 
 
 
-
-
-    // 太阳主体
-
-    ctx.fillStyle =
-    sun.color;
+    ctx.fillStyle=sun.color;
 
 
     ctx.beginPath();
@@ -275,54 +356,15 @@ function drawSun(){
 
 
 
-// =====================
-// 绘制轨道
-// =====================
+// =================
+// 绘制行星
+// =================
 
-function drawOrbit(){
-
-
-    ctx.strokeStyle =
-    "rgba(255,255,255,0.3)";
-
-
-    ctx.lineWidth=1;
-
-
-    ctx.beginPath();
-
-
-    ctx.arc(
-
-        sun.x,
-
-        sun.y,
-
-        earth.distance,
-
-        0,
-
-        Math.PI*2
-
-    );
-
-
-    ctx.stroke();
-
-
-}
-
-
-
-// =====================
-// 绘制地球
-// =====================
-
-function drawEarth(){
+function drawPlanet(planet){
 
 
     ctx.fillStyle =
-    earth.color;
+    planet.color;
 
 
     ctx.beginPath();
@@ -330,11 +372,11 @@ function drawEarth(){
 
     ctx.arc(
 
-        earth.x,
+        planet.x,
 
-        earth.y,
+        planet.y,
 
-        earth.radius,
+        planet.radius,
 
         0,
 
@@ -344,49 +386,53 @@ function drawEarth(){
 
 
     ctx.fill();
-
-
-
-    // 地球小高光
-
-    ctx.fillStyle="white";
-
-
-    ctx.beginPath();
-
-
-    ctx.arc(
-
-        earth.x-4,
-
-        earth.y-4,
-
-        3,
-
-        0,
-
-        Math.PI*2
-
-    );
-
-
-    ctx.fill();
-
 
 
 }
 
 
 
+// =================
+// 绘制月球
+// =================
 
-// =====================
+function drawMoon(){
+
+
+    ctx.fillStyle =
+    moon.color;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        moon.x,
+
+        moon.y,
+
+        moon.radius,
+
+        0,
+
+        Math.PI*2
+
+    );
+
+
+    ctx.fill();
+
+}
+
+
+
+// =================
 // 总绘制
-// =====================
+// =================
 
 function draw(){
 
-
-    // 清屏
 
     ctx.clearRect(
 
@@ -404,13 +450,26 @@ function draw(){
     drawStars();
 
 
-    drawOrbit();
+    for(let planet of planets){
+
+        drawOrbit(planet);
+
+    }
+
 
 
     drawSun();
 
 
-    drawEarth();
+
+    for(let planet of planets){
+
+        drawPlanet(planet);
+
+    }
+
+
+    drawMoon();
 
 
 
@@ -418,26 +477,21 @@ function draw(){
 
 
 
-// =====================
+// =================
 // 动画循环
-// =====================
+// =================
 
 function animate(){
 
-
     update();
 
-
     draw();
-
 
     requestAnimationFrame(
         animate
     );
 
-
 }
-
 
 
 animate();
