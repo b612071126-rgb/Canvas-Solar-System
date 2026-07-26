@@ -2,9 +2,9 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 
-// ========================
+// =====================
 // Canvas
-// ========================
+// =====================
 
 function resize(){
 
@@ -22,13 +22,13 @@ window.addEventListener(
 
 
 
-// ========================
+// =====================
 // 宇宙参数
-// ========================
+// =====================
 
 const universe = {
 
-    G:0.05,
+    G:0.08,
 
     particles:[]
 
@@ -36,9 +36,9 @@ const universe = {
 
 
 
-// ========================
+// =====================
 // 粒子类
-// ========================
+// =====================
 
 class Particle{
 
@@ -52,11 +52,11 @@ class Particle{
 
 
         this.vx=
-        (Math.random()-0.5)*2;
+        (Math.random()-0.5)*1.5;
 
 
         this.vy=
-        (Math.random()-0.5)*2;
+        (Math.random()-0.5)*1.5;
 
 
 
@@ -64,18 +64,12 @@ class Particle{
 
 
         this.radius =
-        Math.sqrt(mass)*2;
-
-
-        this.color =
-        "white";
+        Math.sqrt(this.mass)*2;
 
 
     }
 
 
-
-    // 引力计算
 
     attract(other){
 
@@ -113,22 +107,17 @@ class Particle{
 
 
 
-        let ax =
+        this.vx +=
         force *
         dx /
         distance;
 
 
-        let ay =
+
+        this.vy +=
         force *
         dy /
         distance;
-
-
-
-        this.vx += ax;
-
-        this.vy += ay;
 
 
     }
@@ -144,30 +133,28 @@ class Particle{
 
 
 
-        // 简单阻尼
+        this.vx*=0.995;
 
-        this.vx *=0.995;
-
-        this.vy *=0.995;
+        this.vy*=0.995;
 
 
 
-        // 边界循环
+        // 环绕空间
 
         if(this.x<0)
-            this.x=canvas.width;
+        this.x=canvas.width;
 
 
         if(this.x>canvas.width)
-            this.x=0;
+        this.x=0;
 
 
         if(this.y<0)
-            this.y=canvas.height;
+        this.y=canvas.height;
 
 
         if(this.y>canvas.height)
-            this.y=0;
+        this.y=0;
 
 
 
@@ -178,7 +165,19 @@ class Particle{
     draw(){
 
 
-        ctx.fillStyle=this.color;
+        // 质量越大越亮
+
+        if(this.mass>20){
+
+            ctx.fillStyle="#ffaa00";
+
+        }
+        else{
+
+            ctx.fillStyle="white";
+
+        }
+
 
 
         ctx.beginPath();
@@ -205,38 +204,40 @@ class Particle{
     }
 
 
-
 }
 
 
 
-// ========================
-// 初始化宇宙
-// ========================
+// =====================
+// 创建宇宙
+// =====================
 
 function createUniverse(){
 
 
-    for(let i=0;i<150;i++){
+    for(let i=0;i<200;i++){
 
 
-        let p =
-        new Particle(
+        universe.particles.push(
 
-            Math.random()*canvas.width,
+            new Particle(
 
-            Math.random()*canvas.height,
+                canvas.width/2+
+                (Math.random()-0.5)*500,
 
-            Math.random()*3+1
+
+                canvas.height/2+
+                (Math.random()-0.5)*500,
+
+
+                Math.random()*3+1
+
+            )
 
         );
 
 
-        universe.particles.push(p);
-
-
     }
-
 
 
 }
@@ -246,9 +247,118 @@ createUniverse();
 
 
 
-// ========================
-// 更新宇宙
-// ========================
+// =====================
+// 碰撞合并
+// =====================
+
+function mergeParticles(){
+
+
+    let particles =
+    universe.particles;
+
+
+
+    for(let i=0;i<particles.length;i++){
+
+
+        for(let j=i+1;j<particles.length;j++){
+
+
+            let a=particles[i];
+
+            let b=particles[j];
+
+
+
+            let dx =
+            b.x-a.x;
+
+
+            let dy =
+            b.y-a.y;
+
+
+
+            let distance =
+            Math.sqrt(
+                dx*dx+
+                dy*dy
+            );
+
+
+
+            if(
+                distance <
+                a.radius+b.radius
+            ){
+
+
+                // 质量合并
+
+                let totalMass =
+                a.mass+b.mass;
+
+
+
+                a.mass =
+                totalMass;
+
+
+
+                a.radius =
+                Math.sqrt(
+                    a.mass
+                )*2;
+
+
+
+                // 速度守恒简化
+
+                a.vx =
+                (
+                    a.vx*a.mass+
+                    b.vx*b.mass
+                )
+                /
+                totalMass;
+
+
+
+                a.vy =
+                (
+                    a.vy*a.mass+
+                    b.vy*b.mass
+                )
+                /
+                totalMass;
+
+
+
+                // 删除b
+
+                particles.splice(j,1);
+
+
+                j--;
+
+
+            }
+
+
+        }
+
+
+    }
+
+
+}
+
+
+
+// =====================
+// 更新
+// =====================
 
 function update(){
 
@@ -258,20 +368,15 @@ function update(){
 
 
 
-    // 引力
-
-    for(let i=0;i<particles.length;i++){
+    for(let a of particles){
 
 
-        for(let j=0;j<particles.length;j++){
+        for(let b of particles){
 
 
-            if(i!==j){
+            if(a!==b){
 
-                particles[i]
-                .attract(
-                    particles[j]
-                );
+                a.attract(b);
 
             }
 
@@ -283,7 +388,9 @@ function update(){
 
 
 
-    // 运动
+    mergeParticles();
+
+
 
     for(let p of particles){
 
@@ -296,14 +403,15 @@ function update(){
 
 
 
-// ========================
-// 绘制宇宙
-// ========================
+// =====================
+// 绘制
+// =====================
 
 function draw(){
 
 
-    ctx.fillStyle="rgba(0,0,0,0.2)";
+    ctx.fillStyle=
+    "rgba(0,0,0,0.25)";
 
 
     ctx.fillRect(
@@ -331,9 +439,9 @@ function draw(){
 
 
 
-// ========================
-// 主循环
-// ========================
+// =====================
+// 循环
+// =====================
 
 function animate(){
 
