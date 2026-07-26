@@ -1,11 +1,10 @@
-alert("太阳系启动");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 
-// =================
+// ======================
 // Canvas
-// =================
+// ======================
 
 function resize(){
 
@@ -16,420 +15,160 @@ function resize(){
 
 resize();
 
+
 window.addEventListener(
     "resize",
     resize
 );
 
 
-// =================
-// 星空
-// =================
 
-let stars = [];
+// ======================
+// 粒子系统
+// ======================
 
-for(let i=0;i<200;i++){
-
-    stars.push({
-
-        x:Math.random()*canvas.width,
-
-        y:Math.random()*canvas.height,
-
-        size:Math.random()*2+1
-
-    });
-
-}
+class Particle{
 
 
-function drawStars(){
+    constructor(){
 
-    ctx.fillStyle="white";
+        this.x =
+        Math.random()*canvas.width;
 
-    for(let star of stars){
+
+        this.y =
+        Math.random()*canvas.height;
+
+
+        this.vx =
+        (Math.random()-0.5)*2;
+
+
+        this.vy =
+        (Math.random()-0.5)*2;
+
+
+        this.radius = 2;
+
+
+    }
+
+
+
+    update(){
+
+
+        this.x += this.vx;
+
+        this.y += this.vy;
+
+
+
+        // 边界反弹
+
+        if(
+            this.x < 0 ||
+            this.x > canvas.width
+        ){
+
+            this.vx *= -1;
+
+        }
+
+
+        if(
+            this.y < 0 ||
+            this.y > canvas.height
+        ){
+
+            this.vy *= -1;
+
+        }
+
+
+
+    }
+
+
+
+    draw(){
+
+
+        ctx.fillStyle="white";
+
 
         ctx.beginPath();
 
+
         ctx.arc(
-            star.x,
-            star.y,
-            star.size,
+
+            this.x,
+
+            this.y,
+
+            this.radius,
+
             0,
+
             Math.PI*2
+
         );
+
 
         ctx.fill();
 
+
+
     }
+
 
 }
 
 
 
-// =================
-// 太阳
-// =================
-
-const sun={
-
-    radius:55,
-
-    color:"#ffaa00",
-
-    rotation:0,
-
-};
+// ======================
+// 创建宇宙物质
+// ======================
 
 
-
-// =================
-// 行星系统
-// =================
-
-const planets=[
+let particles=[];
 
 
-    {
+for(
+    let i=0;
+    i<100;
+    i++
+){
 
-        name:"Earth",
+    particles.push(
+        new Particle()
+    );
 
-        distance:170,
-
-        angle:0,
-
-        speed:0.02,
-
-        radius:12,
-
-        color:"#3399ff"
-
-    },
-
-
-    {
-
-        name:"Mars",
-
-        distance:240,
-
-        angle:2,
-
-        speed:0.012,
-
-        radius:9,
-
-        color:"#ff5533"
-
-    },
-
-
-    {
-
-        name:"Jupiter",
-
-        distance:340,
-
-        angle:4,
-
-        speed:0.006,
-
-        radius:25,
-
-        color:"#d9a066"
-
-    }
-
-
-];
+}
 
 
 
-// =================
-// 月球
-// =================
-
-const moon={
-
-    distance:25,
-
-    angle:0,
-
-    speed:0.08,
-
-    radius:4,
-
-    color:"white",
-
-};
-
-
-
-
-// =================
+// ======================
 // 更新
-// =================
+// ======================
 
 function update(){
 
 
-    sun.x =
-    canvas.width/2;
+    for(let p of particles){
 
-
-    sun.y =
-    canvas.height/2;
-
-
-
-    // 行星更新
-
-    for(let planet of planets){
-
-
-        planet.angle += planet.speed;
-
-
-        planet.x =
-        sun.x +
-        Math.cos(planet.angle)
-        *
-        planet.distance;
-
-
-        planet.y =
-        sun.y +
-        Math.sin(planet.angle)
-        *
-        planet.distance;
-
+        p.update();
 
     }
 
 
-
-    // 月球绕地球
-
-    let earth = planets[0];
-
-
-    moon.angle += moon.speed;
-
-
-    moon.x =
-    earth.x +
-    Math.cos(moon.angle)
-    *
-    moon.distance;
-
-
-    moon.y =
-    earth.y +
-    Math.sin(moon.angle)
-    *
-    moon.distance;
-
-
-
 }
 
 
 
-// =================
-// 绘制轨道
-// =================
-
-function drawOrbit(planet){
-
-    ctx.strokeStyle =
-    "rgba(255,255,255,0.25)";
-
-
-    ctx.beginPath();
-
-
-    ctx.arc(
-
-        sun.x,
-
-        sun.y,
-
-        planet.distance,
-
-        0,
-
-        Math.PI*2
-
-    );
-
-
-    ctx.stroke();
-
-
-}
-
-
-
-// =================
-// 绘制太阳
-// =================
-
-function drawSun(){
-
-
-    let glow =
-    ctx.createRadialGradient(
-
-        sun.x,
-        sun.y,
-        20,
-
-        sun.x,
-        sun.y,
-        100
-
-    );
-
-
-    glow.addColorStop(
-        0,
-        "yellow"
-    );
-
-
-    glow.addColorStop(
-        1,
-        "transparent"
-    );
-
-
-    ctx.fillStyle=glow;
-
-
-    ctx.beginPath();
-
-
-    ctx.arc(
-
-        sun.x,
-
-        sun.y,
-
-        100,
-
-        0,
-
-        Math.PI*2
-
-    );
-
-
-    ctx.fill();
-
-
-
-    ctx.fillStyle=sun.color;
-
-
-    ctx.beginPath();
-
-
-    ctx.arc(
-
-        sun.x,
-
-        sun.y,
-
-        sun.radius,
-
-        0,
-
-        Math.PI*2
-
-    );
-
-
-    ctx.fill();
-
-
-}
-
-
-
-// =================
-// 绘制行星
-// =================
-
-function drawPlanet(planet){
-
-
-    ctx.fillStyle =
-    planet.color;
-
-
-    ctx.beginPath();
-
-
-    ctx.arc(
-
-        planet.x,
-
-        planet.y,
-
-        planet.radius,
-
-        0,
-
-        Math.PI*2
-
-    );
-
-
-    ctx.fill();
-
-
-}
-
-
-
-// =================
-// 绘制月球
-// =================
-
-function drawMoon(){
-
-
-    ctx.fillStyle =
-    moon.color;
-
-
-    ctx.beginPath();
-
-
-    ctx.arc(
-
-        moon.x,
-
-        moon.y,
-
-        moon.radius,
-
-        0,
-
-        Math.PI*2
-
-    );
-
-
-    ctx.fill();
-
-}
-
-
-
-// =================
-// 总绘制
-// =================
+// ======================
+// 绘制
+// ======================
 
 function draw(){
 
@@ -447,49 +186,35 @@ function draw(){
     );
 
 
-    drawStars();
 
+    for(let p of particles){
 
-    for(let planet of planets){
-
-        drawOrbit(planet);
+        p.draw();
 
     }
-
-
-
-    drawSun();
-
-
-
-    for(let planet of planets){
-
-        drawPlanet(planet);
-
-    }
-
-
-    drawMoon();
-
 
 
 }
 
 
 
-// =================
-// 动画循环
-// =================
+// ======================
+// 宇宙循环
+// ======================
 
 function animate(){
 
+
     update();
 
+
     draw();
+
 
     requestAnimationFrame(
         animate
     );
+
 
 }
 
