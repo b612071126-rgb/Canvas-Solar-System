@@ -1,5 +1,8 @@
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const canvas =
+document.getElementById("canvas");
+
+const ctx =
+canvas.getContext("2d");
 
 
 // =====================
@@ -8,12 +11,16 @@ const ctx = canvas.getContext("2d");
 
 function resize(){
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width =
+    window.innerWidth;
+
+    canvas.height =
+    window.innerHeight;
 
 }
 
 resize();
+
 
 window.addEventListener(
     "resize",
@@ -23,28 +30,37 @@ window.addEventListener(
 
 
 // =====================
-// 宇宙参数
+// 宇宙核心
 // =====================
 
-const universe = {
+const universe={
 
-    G:0.08,
+    G:0.05,
 
-    particles:[]
+    bodies:[],
+
+    particles:[],
+
+    blackHole:null
 
 };
 
 
 
+
 // =====================
-// 粒子类
+// 基础物体
 // =====================
 
-class Particle{
+class Body{
 
 
-    constructor(x,y,mass){
-
+    constructor(
+        x,
+        y,
+        mass,
+        type="star"
+    ){
 
         this.x=x;
 
@@ -52,84 +68,86 @@ class Particle{
 
 
         this.vx=
-        (Math.random()-0.5)*1.5;
+        (Math.random()-0.5);
 
 
         this.vy=
-        (Math.random()-0.5)*1.5;
+        (Math.random()-0.5);
 
 
 
         this.mass=mass;
 
 
-        this.radius =
-        Math.sqrt(this.mass)*2;
+        this.type=type;
+
+
+        this.radius=
+        Math.sqrt(mass)*2;
+
+
+        this.life=1000;
 
 
     }
 
 
 
-    attract(other){
+
+    gravity(other){
 
 
-        let dx =
+        let dx=
         other.x-this.x;
 
 
-        let dy =
+        let dy=
         other.y-this.y;
 
 
 
-        let distance =
+        let d=
         Math.sqrt(
             dx*dx+
             dy*dy
         );
 
 
-
-        if(distance<10){
-
-            return;
-
-        }
+        if(d<20)
+        return;
 
 
 
-        let force =
-        universe.G *
-        this.mass *
-        other.mass /
-        (distance*distance);
+        let force=
+        universe.G*
+        this.mass*
+        other.mass/
+        (d*d);
 
 
 
         this.vx +=
-        force *
-        dx /
-        distance;
-
+        force*
+        dx/d;
 
 
         this.vy +=
-        force *
-        dy /
-        distance;
+        force*
+        dy/d;
+
 
 
     }
 
 
 
+
     update(){
 
 
-        this.x += this.vx;
+        this.x+=this.vx;
 
-        this.y += this.vy;
+        this.y+=this.vy;
 
 
 
@@ -138,43 +156,24 @@ class Particle{
         this.vy*=0.995;
 
 
-
-        // 环绕空间
-
-        if(this.x<0)
-        this.x=canvas.width;
-
-
-        if(this.x>canvas.width)
-        this.x=0;
-
-
-        if(this.y<0)
-        this.y=canvas.height;
-
-
-        if(this.y>canvas.height)
-        this.y=0;
-
-
-
     }
+
 
 
 
     draw(){
 
 
-        // 质量越大越亮
+        if(this.type==="star"){
 
-        if(this.mass>20){
-
-            ctx.fillStyle="#ffaa00";
+            ctx.fillStyle=
+            "orange";
 
         }
         else{
 
-            ctx.fillStyle="white";
+            ctx.fillStyle=
+            "white";
 
         }
 
@@ -204,83 +203,84 @@ class Particle{
     }
 
 
+
 }
 
 
 
+
+
+
 // =====================
-// 创建宇宙
+// 黑洞
 // =====================
 
-function createUniverse(){
+class BlackHole extends Body{
 
 
-    for(let i=0;i<200;i++){
+    constructor(x,y){
 
 
-        universe.particles.push(
-
-            new Particle(
-
-                canvas.width/2+
-                (Math.random()-0.5)*500,
-
-
-                canvas.height/2+
-                (Math.random()-0.5)*500,
-
-
-                Math.random()*3+1
-
-            )
-
+        super(
+            x,
+            y,
+            800,
+            "blackhole"
         );
+
+
+        this.radius=30;
+
+        this.diskAngle=0;
 
 
     }
 
 
-}
 
 
-createUniverse();
+    update(){
 
 
-
-// =====================
-// 碰撞合并
-// =====================
-
-function mergeParticles(){
+        this.diskAngle+=0.03;
 
 
-    let particles =
-    universe.particles;
+    }
 
 
 
-    for(let i=0;i<particles.length;i++){
 
 
-        for(let j=i+1;j<particles.length;j++){
+    consume(){
 
 
-            let a=particles[i];
-
-            let b=particles[j];
-
-
-
-            let dx =
-            b.x-a.x;
+        for(
+            let i=
+            universe.bodies.length-1;
+            i>=0;
+            i--
+        ){
 
 
-            let dy =
-            b.y-a.y;
+            let b=
+            universe.bodies[i];
+
+
+            if(b===this)
+            continue;
 
 
 
-            let distance =
+            let dx=
+            b.x-this.x;
+
+
+            let dy=
+            b.y-this.y;
+
+
+
+            let d=
             Math.sqrt(
                 dx*dx+
                 dy*dy
@@ -289,175 +289,111 @@ function mergeParticles(){
 
 
             if(
-                distance <
-                a.radius+b.radius
+                d <
+                this.radius+b.radius
             ){
 
 
-                // 质量合并
-
-                let totalMass =
-                a.mass+b.mass;
+                this.mass+=b.mass;
 
 
 
-                a.mass =
-                totalMass;
-
-
-
-                a.radius =
+                this.radius=
                 Math.sqrt(
-                    a.mass
-                )*2;
+                    this.mass
+                );
+
+
+                universe.bodies.splice(
+                    i,
+                    1
+                );
 
 
 
-                // 速度守恒简化
-
-                a.vx =
-                (
-                    a.vx*a.mass+
-                    b.vx*b.mass
-                )
-                /
-                totalMass;
-
-
-
-                a.vy =
-                (
-                    a.vy*a.mass+
-                    b.vy*b.mass
-                )
-                /
-                totalMass;
-
-
-
-                // 删除b
-
-                particles.splice(j,1);
-
-
-                j--;
+                createExplosion(
+                    b.x,
+                    b.y
+                );
 
 
             }
 
 
-        }
-
-
-    }
-
-
-}
-
-
-
-// =====================
-// 更新
-// =====================
-
-function update(){
-
-
-    let particles =
-    universe.particles;
-
-
-
-    for(let a of particles){
-
-
-        for(let b of particles){
-
-
-            if(a!==b){
-
-                a.attract(b);
-
-            }
-
 
         }
 
 
-    }
-
-
-
-    mergeParticles();
-
-
-
-    for(let p of particles){
-
-        p.update();
 
     }
 
 
-}
+
+    draw(){
+
+
+        // 吸积盘
+
+        ctx.strokeStyle=
+        "rgba(255,120,0,0.5)";
+
+
+        ctx.lineWidth=5;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            this.x,
+
+            this.y,
+
+            this.radius*2,
+
+            this.diskAngle,
+
+            this.diskAngle+Math.PI*2
+
+        );
+
+
+        ctx.stroke();
 
 
 
-// =====================
-// 绘制
-// =====================
 
-function draw(){
+        // 黑洞本体
 
-
-    ctx.fillStyle=
-    "rgba(0,0,0,0.25)";
+        ctx.fillStyle=
+        "black";
 
 
-    ctx.fillRect(
-
-        0,
-
-        0,
-
-        canvas.width,
-
-        canvas.height
-
-    );
+        ctx.beginPath();
 
 
+        ctx.arc(
 
-    for(let p of universe.particles){
+            this.x,
 
-        p.draw();
+            this.y,
+
+            this.radius,
+
+            0,
+
+            Math.PI*2
+
+        );
+
+
+        ctx.fill();
+
+
 
     }
 
 
-}
-
-
-
-// =====================
-// 循环
-// =====================
-
-function animate(){
-
-
-    update();
-
-
-    draw();
-
-
-    requestAnimationFrame(
-        animate
-    );
-
 
 }
-
-
-animate();
