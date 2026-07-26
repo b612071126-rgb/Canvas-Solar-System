@@ -2,9 +2,9 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 
-// ======================
+// ========================
 // Canvas
-// ======================
+// ========================
 
 function resize(){
 
@@ -15,7 +15,6 @@ function resize(){
 
 resize();
 
-
 window.addEventListener(
     "resize",
     resize
@@ -23,32 +22,113 @@ window.addEventListener(
 
 
 
-// ======================
-// 粒子系统
-// ======================
+// ========================
+// 宇宙参数
+// ========================
+
+const universe = {
+
+    G:0.05,
+
+    particles:[]
+
+};
+
+
+
+// ========================
+// 粒子类
+// ========================
 
 class Particle{
 
 
-    constructor(){
-
-        this.x =
-        Math.random()*canvas.width;
+    constructor(x,y,mass){
 
 
-        this.y =
-        Math.random()*canvas.height;
+        this.x=x;
+
+        this.y=y;
 
 
-        this.vx =
+        this.vx=
         (Math.random()-0.5)*2;
 
 
-        this.vy =
+        this.vy=
         (Math.random()-0.5)*2;
 
 
-        this.radius = 2;
+
+        this.mass=mass;
+
+
+        this.radius =
+        Math.sqrt(mass)*2;
+
+
+        this.color =
+        "white";
+
+
+    }
+
+
+
+    // 引力计算
+
+    attract(other){
+
+
+        let dx =
+        other.x-this.x;
+
+
+        let dy =
+        other.y-this.y;
+
+
+
+        let distance =
+        Math.sqrt(
+            dx*dx+
+            dy*dy
+        );
+
+
+
+        if(distance<10){
+
+            return;
+
+        }
+
+
+
+        let force =
+        universe.G *
+        this.mass *
+        other.mass /
+        (distance*distance);
+
+
+
+        let ax =
+        force *
+        dx /
+        distance;
+
+
+        let ay =
+        force *
+        dy /
+        distance;
+
+
+
+        this.vx += ax;
+
+        this.vy += ay;
 
 
     }
@@ -64,26 +144,30 @@ class Particle{
 
 
 
-        // 边界反弹
+        // 简单阻尼
 
-        if(
-            this.x < 0 ||
-            this.x > canvas.width
-        ){
+        this.vx *=0.995;
 
-            this.vx *= -1;
-
-        }
+        this.vy *=0.995;
 
 
-        if(
-            this.y < 0 ||
-            this.y > canvas.height
-        ){
 
-            this.vy *= -1;
+        // 边界循环
 
-        }
+        if(this.x<0)
+            this.x=canvas.width;
+
+
+        if(this.x>canvas.width)
+            this.x=0;
+
+
+        if(this.y<0)
+            this.y=canvas.height;
+
+
+        if(this.y>canvas.height)
+            this.y=0;
 
 
 
@@ -94,7 +178,7 @@ class Particle{
     draw(){
 
 
-        ctx.fillStyle="white";
+        ctx.fillStyle=this.color;
 
 
         ctx.beginPath();
@@ -118,42 +202,88 @@ class Particle{
         ctx.fill();
 
 
+    }
+
+
+
+}
+
+
+
+// ========================
+// 初始化宇宙
+// ========================
+
+function createUniverse(){
+
+
+    for(let i=0;i<150;i++){
+
+
+        let p =
+        new Particle(
+
+            Math.random()*canvas.width,
+
+            Math.random()*canvas.height,
+
+            Math.random()*3+1
+
+        );
+
+
+        universe.particles.push(p);
+
 
     }
 
 
-}
-
-
-
-// ======================
-// 创建宇宙物质
-// ======================
-
-
-let particles=[];
-
-
-for(
-    let i=0;
-    i<100;
-    i++
-){
-
-    particles.push(
-        new Particle()
-    );
 
 }
 
 
+createUniverse();
 
-// ======================
-// 更新
-// ======================
+
+
+// ========================
+// 更新宇宙
+// ========================
 
 function update(){
 
+
+    let particles =
+    universe.particles;
+
+
+
+    // 引力
+
+    for(let i=0;i<particles.length;i++){
+
+
+        for(let j=0;j<particles.length;j++){
+
+
+            if(i!==j){
+
+                particles[i]
+                .attract(
+                    particles[j]
+                );
+
+            }
+
+
+        }
+
+
+    }
+
+
+
+    // 运动
 
     for(let p of particles){
 
@@ -166,14 +296,17 @@ function update(){
 
 
 
-// ======================
-// 绘制
-// ======================
+// ========================
+// 绘制宇宙
+// ========================
 
 function draw(){
 
 
-    ctx.clearRect(
+    ctx.fillStyle="rgba(0,0,0,0.2)";
+
+
+    ctx.fillRect(
 
         0,
 
@@ -187,7 +320,7 @@ function draw(){
 
 
 
-    for(let p of particles){
+    for(let p of universe.particles){
 
         p.draw();
 
@@ -198,9 +331,9 @@ function draw(){
 
 
 
-// ======================
-// 宇宙循环
-// ======================
+// ========================
+// 主循环
+// ========================
 
 function animate(){
 
